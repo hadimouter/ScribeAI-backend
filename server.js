@@ -11,6 +11,7 @@ const documentRoutes = require('./src/routes/documents');
 const folderRoutes = require('./src/routes/folders');
 const paymentRoutes = require('./src/routes/payments');
 const shareRoutes = require('./src/routes/share');
+const studyRoutes = require('./src/routes/study');
 
 const app = express();
 
@@ -34,6 +35,7 @@ app.use('/api/documents', documentRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/share', shareRoutes);
 app.use('/api/folders', folderRoutes);
+app.use('/api/study', studyRoutes);
 
 // Routes de base
 app.get('/', (req, res) => {
