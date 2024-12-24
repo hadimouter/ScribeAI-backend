@@ -18,18 +18,18 @@ class SubscriptionService {
   async getUserPlan(userId) {
     try {
       const subscription = await Subscription.findOne({ user: userId });
-      return subscription?.status === 'active' ? 'premium' : 'restricted';
+      return (subscription?.status === 'active' || subscription?.isTrialing) ? 'premium' : 'restricted';
     } catch (error) {
       console.error('Error getting user plan:', error);
       return 'restricted';
     }
   }
 
+
   async getPlanLimits(userId) {
     try {
       const subscription = await Subscription.findOne({ user: userId });
-      // Si l'abonnement est actif (incluant la période d'essai), donner les limites Premium
-      return (subscription?.status === 'active') ? this.PREMIUM_LIMITS : this.RESTRICTED_LIMITS;
+      return (subscription?.status === 'active' || subscription?.isTrialing) ? this.PREMIUM_LIMITS : this.RESTRICTED_LIMITS;
     } catch (error) {
       console.error('Error getting plan limits:', error);
       return this.RESTRICTED_LIMITS;

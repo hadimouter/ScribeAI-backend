@@ -1,7 +1,9 @@
+//backend/src/routes/payements.js
 const express = require('express');
 const router = express.Router();
 const { protect } = require('../middlewares/auth');
 const stripeService = require('../services/stripeService');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 // Créer une session de paiement
 router.post('/create-checkout-session', protect, async (req, res) => {
@@ -36,6 +38,23 @@ router.post('/webhook', async (req, res) => {
   } catch (error) {
     console.error('Webhook error:', error);
     res.status(400).json({ message: error.message });
+  }
+});
+
+router.post('/create-portal-session', protect, async (req, res) => {
+  try {
+    // Récupérer le customer ID via votre service
+    const customerId = await stripeService.getCustomerId(req.user._id);
+    
+    const session = await stripe.billingPortal.sessions.create({
+      customer: customerId,
+      return_url: `${process.env.FRONTEND_URL}/dashboard/subscription`,
+    });
+
+    res.json({ url: session.url });
+  } catch (error) {
+    console.error('Portal session error:', error);
+    res.status(500).json({ message: 'Erreur création session portail' });
   }
 });
 

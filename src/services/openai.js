@@ -1,5 +1,6 @@
 // backend/src/services/openai.js
 const openai = require('../config/openai');
+const subscriptionService = require('./subscription');
 
 class OpenAIService {
   constructor() {
@@ -8,19 +9,24 @@ class OpenAIService {
   }
 
   async getModelForUser(userId) {
-    // Pour l'instant, on utilise toujours le model par défaut
-    return this.defaultModel;
+    try {
+      const userPlan = await subscriptionService.getUserPlan(userId);
+      return userPlan === 'premium' ? this.premiumModel : this.defaultModel;
+    } catch (error) {
+      console.error('Error getting user model:', error);
+      return this.defaultModel; // En cas d'erreur, on utilise le modèle par défaut
+    }
   }
 
   async generateCompletion(user, prompt) {
     try {
       const model = await this.getModelForUser(user._id);
-      
+
       const completion = await openai.chat.completions.create({
         model: model,
         messages: [
-          { 
-            role: "system", 
+          {
+            role: "system",
             content: "Vous êtes un assistant de rédaction expert en français, spécialisé dans l'amélioration de texte."
           },
           { role: "user", content: prompt }

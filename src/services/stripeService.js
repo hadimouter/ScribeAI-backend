@@ -3,6 +3,31 @@ const User = require('../models/User');
 const Subscription = require('../models/Subscription');
 
 class StripeService {
+
+  async getCustomerId(userId) {
+    try {
+      const user = await User.findById(userId);
+      if (!user.stripeCustomerId) {
+        // Si l'utilisateur n'a pas de customerId, en créer un
+        const customer = await stripe.customers.create({
+          email: user.email,
+          name: `${user.firstName} ${user.lastName}`,
+          metadata: {
+            userId: user._id.toString()
+          }
+        });
+        
+        user.stripeCustomerId = customer.id;
+        await user.save();
+        return customer.id;
+      }
+      return user.stripeCustomerId;
+    } catch (error) {
+      console.error('Error getting/creating customer:', error);
+      throw new Error('Failed to get Stripe customer ID');
+    }
+   }
+
   async createCustomer(user) {
     try {
       const customer = await stripe.customers.create({
@@ -152,6 +177,7 @@ class StripeService {
     // que sa période d'essai se termine bientôt
     console.log('Trial will end for subscription:', subscription.id);
   }
+
 }
 
 module.exports = new StripeService();
