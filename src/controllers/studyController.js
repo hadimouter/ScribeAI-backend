@@ -1,4 +1,3 @@
-// backend/src/controllers/studyController.js
 const fileExtractor = require('../services/fileExtractor');
 const multer = require('multer');
 

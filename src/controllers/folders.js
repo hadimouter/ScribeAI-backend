@@ -1,4 +1,3 @@
-// backend/src/controllers/folders.js
 const Folder = require('../models/Folder');
 const Document = require('../models/Document');
 

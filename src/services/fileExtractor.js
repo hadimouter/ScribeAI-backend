@@ -1,4 +1,3 @@
-// backend/src/services/fileExtractor.js
 const pdf = require('pdf-parse');
 const mammoth = require('mammoth');
 

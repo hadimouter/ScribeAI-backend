@@ -1,4 +1,3 @@
-// backend/src/services/openai.js
 const openai = require('../config/openai');
 const subscriptionService = require('./subscription');
 

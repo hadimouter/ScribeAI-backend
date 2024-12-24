@@ -1,4 +1,3 @@
-// backend/src/models/Folder.js
 const mongoose = require('mongoose');
 
 const folderSchema = new mongoose.Schema({
@@ -15,7 +14,7 @@ const folderSchema = new mongoose.Schema({
   parent: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Folder',
-    default: null // null signifie que c'est un dossier racine
+    default: null //  signifie que c'est un dossier racine
   },
   // Pour gérer l'ordre d'affichage
   order: {

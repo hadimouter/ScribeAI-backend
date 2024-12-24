@@ -1,4 +1,3 @@
-// backend/src/controllers/documents.js
 const Document = require('../models/Document');
 const exportService = require('../services/export');
 const subscriptionService = require('../services/subscription');

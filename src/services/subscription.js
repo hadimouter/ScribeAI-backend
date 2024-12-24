@@ -1,4 +1,3 @@
-// backend/src/services/subscription.js
 const User = require('../models/User');
 const Subscription = require('../models/Subscription');
 

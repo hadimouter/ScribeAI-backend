@@ -173,8 +173,6 @@ class StripeService {
   }
 
   async _handleTrialWillEnd(subscription) {
-    // Vous pouvez ajouter ici une logique pour notifier l'utilisateur
-    // que sa période d'essai se termine bientôt
     console.log('Trial will end for subscription:', subscription.id);
   }
 

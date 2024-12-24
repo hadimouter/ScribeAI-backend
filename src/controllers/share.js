@@ -1,4 +1,3 @@
-// backend/src/controllers/share.js
 const ShareLink = require('../models/ShareLink');
 const Document = require('../models/Document');
 const crypto = require('crypto');

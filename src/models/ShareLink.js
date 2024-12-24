@@ -1,4 +1,3 @@
-// backend/src/models/ShareLink.js
 const mongoose = require('mongoose');
 
 const shareLinkSchema = new mongoose.Schema({

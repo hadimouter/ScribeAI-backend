@@ -1,4 +1,3 @@
-// backend/src/routes/study.js
 const express = require('express');
 const router = express.Router();
 const { extractContent, upload } = require('../controllers/studyController');

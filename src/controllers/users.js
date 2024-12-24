@@ -3,6 +3,8 @@ const User = require('../models/User');
 const Document = require('../models/Document');
 const Subscription = require('../models/Subscription');
 const bcrypt = require('bcryptjs');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
 
 const getUserStats = async (req, res) => {
   try {
@@ -141,10 +143,35 @@ const changePassword = async (req, res) => {
 };
 
 
+const deleteAccount = async (req, res) => {
+  try {
+    // Supprimer l'abonnement Stripe si existe
+    const user = await User.findById(req.user._id);
+    console.log(user)
+    if (user.stripeCustomerId) {
+      await stripe.customers.del(user.stripeCustomerId);
+    }
+
+    // Supprimer tous les documents
+    await Document.deleteMany({ user: req.user._id });
+    
+    // Supprimer l'abonnement
+    await Subscription.deleteOne({ user: req.user._id });
+    
+    // Supprimer l'utilisateur
+    await User.findByIdAndDelete(req.user._id);
+
+    res.json({ message: 'Compte supprimé avec succès' });
+  } catch (error) {
+    res.status(500).json({ message: 'Erreur lors de la suppression du compte' });
+  }
+};
+
 
 module.exports = {
   getUserStats,
   getCurrentSubscription,
   updateProfile,
-  changePassword
+  changePassword,
+  deleteAccount
 };

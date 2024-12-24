@@ -1,4 +1,3 @@
-// backend/src/services/export.js
 const pdf = require('html-pdf');
 const officegen = require('officegen');
 const fs = require('fs');
