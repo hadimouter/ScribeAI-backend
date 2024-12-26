@@ -7,8 +7,6 @@ const {
     getDocuments,
     getDocument,
     deleteDocument,
-    exportPDF,
-    exportDOCX,
     generateDocumentWithAI
 } = require('../controllers/documents');
 
@@ -22,11 +20,5 @@ router.route('/:id')
     .get(getDocument)
     .put(updateDocument)
     .delete(deleteDocument);
-
-router.get('/:id/export/pdf', exportPDF); 
-router.get('/:id/export/docx', exportDOCX); 
-
-
-
 
 module.exports = router;

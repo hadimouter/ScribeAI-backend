@@ -1,5 +1,4 @@
 const Document = require('../models/Document');
-const exportService = require('../services/export');
 const subscriptionService = require('../services/subscription');
 
 const createDocument = async (req, res) => {
@@ -132,49 +131,6 @@ const deleteDocument = async (req, res) => {
   }
 };
 
-const exportPDF = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const document = await Document.findOne({
-      _id: id,
-      user: req.user._id
-    });
-
-    if (!document) {
-      return res.status(404).json({ message: 'Document non trouvé' });
-    }
-
-    const buffer = await exportService.generatePDF(document.content, document.title);
-
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename=${document.title}.pdf`);
-    res.send(buffer);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-const exportDOCX = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const document = await Document.findOne({
-      _id: id,
-      user: req.user._id
-    });
-    if (!document) {
-      return res.status(404).json({ message: 'Document non trouvé' });
-    }
-
-    const buffer = await exportService.generateDOCX(document.content, document.title);
-
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-    res.setHeader('Content-Disposition', `attachment; filename=${document.title}.docx`);
-    res.send(buffer);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
 const generateDocumentWithAI = async (req, res) => {
   try {
     const { type, title, academicInfo, details } = req.body;
@@ -210,8 +166,6 @@ const generateDocumentWithAI = async (req, res) => {
   }
 };
 module.exports = {
-  exportPDF,
-  exportDOCX,
   createDocument,
   updateDocument,
   getDocuments,
