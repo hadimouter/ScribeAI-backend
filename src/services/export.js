@@ -5,7 +5,17 @@ const path = require('path');
 
 class ExportService {
   async generatePDF(content, title) {
-    return new Promise((resolve, reject) => {
+    try {
+      // Lancer le navigateur
+      const browser = await puppeteer.launch({
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        headless: 'new'
+      });
+
+      // Créer une nouvelle page
+      const page = await browser.newPage();
+
+      // Le HTML à convertir
       const html = `
         <html>
           <head>
@@ -21,16 +31,28 @@ class ExportService {
         </html>
       `;
 
-      const options = {
-        format: 'A4',
-        border: '20px',
-      };
+      // Définir le contenu
+      await page.setContent(html);
 
-      pdf.create(html, options).toBuffer((err, buffer) => {
-        if (err) reject(err);
-        else resolve(buffer);
+      // Générer le PDF
+      const buffer = await page.pdf({
+        format: 'A4',
+        margin: {
+          top: '20px',
+          right: '20px',
+          bottom: '20px',
+          left: '20px'
+        }
       });
-    });
+
+      // Fermer le navigateur
+      await browser.close();
+
+      return buffer;
+    } catch (error) {
+      console.error('PDF Generation Error:', error);
+      throw error;
+    }
   }
 
   async generateDOCX(content, title) {
