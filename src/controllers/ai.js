@@ -176,6 +176,15 @@ const aiAssistant = async (req, res) => {
        Contenu : "${text}"`;
         break;
 
+      case 'summarize':
+        prompt = `Résumez ce texte en gardant les informations importantes et retournez un JSON :
+          {
+            "summary": "Le résumé ici"
+          }
+          
+          Texte : "${text}"`;
+        break;
+
       default:
         return res.status(400).json({ message: 'Action non valide' });
     }

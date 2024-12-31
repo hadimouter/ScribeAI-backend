@@ -14,7 +14,7 @@ const register = async (req, res) => {
     // Vérifier si l'utilisateur existe déjà
     const userExists = await User.findOne({ email });
     if (userExists) {
-      return res.status(400).json({ message: 'User already exists' });
+      return res.status(400).json({ message: "Un utilisateur avec cet email existe déjà." });
     }
 
     // Créer le nouvel utilisateur
@@ -22,7 +22,7 @@ const register = async (req, res) => {
       email,
       password,
       firstName,
-      lastName
+      lastName,
     });
 
     // Générer le token
@@ -33,10 +33,10 @@ const register = async (req, res) => {
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
-      token
+      token,
     });
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    res.status(400).json({ message: "Une erreur est survenue lors de l'enregistrement. Veuillez réessayer." });
   }
 };
 
@@ -47,13 +47,13 @@ const login = async (req, res) => {
     // Trouver l'utilisateur
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ message: "Adresse email ou mot de passe incorrect." });
     }
 
     // Vérifier le mot de passe
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ message: "Adresse email ou mot de passe incorrect." });
     }
 
     // Générer le token
@@ -64,10 +64,10 @@ const login = async (req, res) => {
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
-      token
+      token,
     });
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    res.status(400).json({ message: "Une erreur est survenue lors de la connexion. Veuillez réessayer." });
   }
 };
 
@@ -76,12 +76,12 @@ const getMe = async (req, res) => {
     const user = await User.findById(req.user._id).select('-password');
     res.json(user);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    res.status(400).json({ message: "Une erreur est survenue lors de la récupération des informations. Veuillez réessayer." });
   }
 };
 
 module.exports = {
   register,
   login,
-  getMe
+  getMe,
 };
