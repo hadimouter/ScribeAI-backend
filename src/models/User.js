@@ -49,7 +49,9 @@ const userSchema = new mongoose.Schema({
   aiRequestsLastReset: {
     type: Date,
     default: Date.now
-  }
+  },
+  resetPasswordToken: String,
+  resetPasswordExpire: Date,
 }, {
   timestamps: true
 });
