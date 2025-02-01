@@ -25,6 +25,12 @@ const userSchema = new mongoose.Schema({
     required: [true, 'Last name is required'],
     trim: true
   },
+  isEmailVerified: {
+    type: Boolean,
+    default: false
+  },
+  verificationToken: String,
+  verificationTokenExpiry: Date,
   role: {
     type: String,
     enum: ['user', 'admin'],

@@ -19,46 +19,105 @@ const register = async (req, res) => {
       return res.status(400).json({ message: "Un utilisateur avec cet email existe déjà." });
     }
 
+    // Générer le token de vérification
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+
     // Créer le nouvel utilisateur
     const user = await User.create({
       email,
       password,
       firstName,
       lastName,
+      verificationToken,
+      verificationTokenExpiry: Date.now() + 24 * 60 * 60 * 1000, // 24 heures
+      isEmailVerified: false
     });
 
-    // Générer le token
-    const token = generateToken(user._id);
+    // Envoyer l'email de vérification
+    const verificationUrl = `${process.env.FRONTEND_URL}/verify-email/${verificationToken}`;
+    await sendEmail({
+      email: user.email,
+      subject: 'Vérification de votre compte ScribeAI',
+      message: `
+        <h1>Bienvenue sur ScribeAI !</h1>
+        <p>Pour finaliser votre inscription, veuillez cliquer sur le lien suivant :</p>
+        <a href="${verificationUrl}">Vérifier mon compte</a>
+        <p>Ce lien expire dans 24 heures.</p>
+      `
+    });
 
+    // Ne pas connecter l'utilisateur avant la vérification
     res.status(201).json({
+      message: "Compte créé avec succès. Veuillez vérifier votre email pour activer votre compte."
+    });
+  } catch (error) {
+    res.status(400).json({ message: "Une erreur est survenue lors de l'enregistrement." });
+  }
+};
+
+
+const verifyEmail = async (req, res) => {
+  try {
+    const { token } = req.params;
+
+    const user = await User.findOne({
+      verificationToken: token,
+      verificationTokenExpiry: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        message: "Le lien de vérification est invalide ou a expiré."
+      });
+    }
+
+    user.isEmailVerified = true;
+    user.verificationToken = undefined;
+    user.verificationTokenExpiry = undefined;
+    await user.save();
+
+    // Générer le token JWT pour la connexion automatique
+    const authToken = generateToken(user._id);
+
+    res.json({
       _id: user._id,
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
-      token,
+      token: authToken
     });
   } catch (error) {
-    res.status(400).json({ message: "Une erreur est survenue lors de l'enregistrement. Veuillez réessayer." });
+    res.status(500).json({
+      message: "Une erreur est survenue lors de la vérification."
+    });
   }
 };
+
 
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Trouver l'utilisateur
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(401).json({ message: "Adresse email ou mot de passe incorrect." });
+      return res.status(401).json({
+        message: "Email ou mot de passe incorrect."
+      });
     }
 
-    // Vérifier le mot de passe
+    if (!user.isEmailVerified) {
+      return res.status(403).json({
+        message: "Veuillez vérifier votre email avant de vous connecter."
+      });
+    }
+
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      return res.status(401).json({ message: "Adresse email ou mot de passe incorrect." });
+      return res.status(401).json({
+        message: "Email ou mot de passe incorrect."
+      });
     }
 
-    // Générer le token
     const token = generateToken(user._id);
 
     res.json({
@@ -66,10 +125,12 @@ const login = async (req, res) => {
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
-      token,
+      token
     });
   } catch (error) {
-    res.status(400).json({ message: "Une erreur est survenue lors de la connexion. Veuillez réessayer." });
+    res.status(400).json({
+      message: "Une erreur est survenue lors de la connexion."
+    });
   }
 };
 
@@ -154,5 +215,6 @@ module.exports = {
   login,
   getMe,
   forgotPassword,
-  resetPassword
+  resetPassword,
+  verifyEmail
 };
