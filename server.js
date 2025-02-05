@@ -16,7 +16,17 @@ const studyRoutes = require('./src/routes/study');
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: [
+    'https://scribe-ai-frontend.vercel.app',
+    'http://localhost:3000',  // Pour le développement local
+    'http://localhost:3001'   // Pour le développement local
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+  maxAge: 86400 // Cache les résultats du preflight pendant 24 heures
+}));
 
 // Configuration spéciale pour le webhook Stripe
 app.use('/api/payments/webhook', bodyParser.raw({ type: 'application/json' }));
@@ -40,6 +50,16 @@ app.use('/api/study', studyRoutes);
 // Routes de base
 app.get('/', (req, res) => {
   res.send('API is running');
+});
+
+// Gestion des erreurs CORS
+app.use((err, req, res, next) => {
+  if (err.name === 'CORSError') {
+    return res.status(403).json({
+      message: 'Requête CORS non autorisée'
+    });
+  }
+  next(err);
 });
 
 // Gestion des erreurs globale
