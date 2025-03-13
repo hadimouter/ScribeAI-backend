@@ -162,7 +162,7 @@ const forgotPassword = async (req, res) => {
     await user.save();
 
     // Créer un lien de réinitialisation
-    const resetUrl = `http://localhost:3001/reset-password/${resetToken}`;
+    const resetUrl = `https://scribe-ai-frontend.vercel.app/reset-password/${resetToken}`;
     const message = `
       <p>Vous avez demandé une réinitialisation de mot de passe.</p>
       <p>Cliquez sur le lien ci-dessous pour réinitialiser votre mot de passe :</p>
