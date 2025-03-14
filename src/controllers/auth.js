@@ -13,10 +13,48 @@ const register = async (req, res) => {
   try {
     const { email, password, firstName, lastName } = req.body;
 
+    // Validation des champs avant de vérifier la base de données
+    const errors = {};
+
+    // Validation de l'email
+    if (!email) {
+      errors.email = "L'adresse email est requise";
+    } else if (!/^\S+@\S+\.\S+$/.test(email)) {
+      errors.email = "Veuillez entrer une adresse email valide";
+    }
+
+    // Validation du mot de passe
+    if (!password) {
+      errors.password = "Le mot de passe est requis";
+    } else if (password.length < 8) {
+      errors.password = "Le mot de passe doit contenir au moins 8 caractères";
+    }
+
+    // Validation du prénom
+    if (!firstName || firstName.trim() === '') {
+      errors.firstName = "Le prénom est requis";
+    }
+
+    // Validation du nom
+    if (!lastName || lastName.trim() === '') {
+      errors.lastName = "Le nom est requis";
+    }
+
+    // Si des erreurs de validation sont détectées, renvoyer un message d'erreur détaillé
+    if (Object.keys(errors).length > 0) {
+      return res.status(400).json({
+        message: "Veuillez corriger les erreurs suivantes",
+        errors
+      });
+    }
+
     // Vérifier si l'utilisateur existe déjà
     const userExists = await User.findOne({ email });
     if (userExists) {
-      return res.status(400).json({ message: "Un utilisateur avec cet email existe déjà." });
+      return res.status(400).json({
+        message: "Cette adresse email est déjà utilisée",
+        errors: { email: "Un compte existe déjà avec cette adresse email" }
+      });
     }
 
     // Générer le token de vérification
@@ -35,23 +73,104 @@ const register = async (req, res) => {
 
     // Envoyer l'email de vérification
     const verificationUrl = `${process.env.FRONTEND_URL}/verify-email/${verificationToken}`;
+    
+    // Template HTML amélioré pour l'email
+    const htmlMessage = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Bienvenue sur ScribeAI</title>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+          }
+          .header {
+            text-align: center;
+            margin-bottom: 30px;
+          }
+          .logo {
+            max-width: 150px;
+          }
+          h1 {
+            color: #2c3e50;
+          }
+          .button {
+            display: inline-block;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            margin: 20px 0;
+          }
+          .footer {
+            margin-top: 30px;
+            font-size: 0.9em;
+            color: #7f8c8d;
+            text-align: center;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>Bienvenue sur ScribeAI, ${firstName} !</h1>
+        </div>
+        <p>Merci de vous être inscrit à notre plateforme. Nous sommes ravis de vous compter parmi nos utilisateurs.</p>
+        <p>Pour finaliser votre inscription et commencer à utiliser tous nos services, veuillez cliquer sur le bouton ci-dessous :</p>
+        <div style="text-align: center;">
+          <a href="${verificationUrl}" class="button">Vérifier mon compte</a>
+        </div>
+        <p><strong>Attention :</strong> Ce lien expire dans 24 heures.</p>
+        <p>Si vous n'avez pas créé de compte sur ScribeAI, veuillez ignorer cet email.</p>
+        <div class="footer">
+          <p>© ${new Date().getFullYear()} ScribeAI. Tous droits réservés.</p>
+          <p>Pour toute question, contactez notre support à <a href="mailto:support@scribeai.com">support@scribeai.com</a></p>
+        </div>
+      </body>
+      </html>
+    `;
+
     await sendEmail({
       email: user.email,
-      subject: 'Vérification de votre compte ScribeAI',
-      message: `
-        <h1>Bienvenue sur ScribeAI !</h1>
-        <p>Pour finaliser votre inscription, veuillez cliquer sur le lien suivant :</p>
-        <a href="${verificationUrl}">Vérifier mon compte</a>
-        <p>Ce lien expire dans 24 heures.</p>
-      `
+      subject: 'Bienvenue sur ScribeAI - Vérification de votre compte',
+      message: htmlMessage
     });
 
-    // Ne pas connecter l'utilisateur avant la vérification
+    // Réponse appropriée
     res.status(201).json({
-      message: "Compte créé avec succès. Veuillez vérifier votre email pour activer votre compte."
+      success: true,
+      message: `Bienvenue ${firstName} ! Votre compte a été créé avec succès. Nous vous avons envoyé un email de vérification à l'adresse ${email}. Veuillez cliquer sur le lien dans cet email pour activer votre compte.`
     });
   } catch (error) {
-    res.status(400).json({ message: "Une erreur est survenue lors de l'enregistrement." });
+    console.error('Erreur d\'enregistrement:', error);
+    
+    // Gestion des erreurs spécifiques
+    if (error.name === 'ValidationError') {
+      const errors = {};
+      
+      // Formatage des erreurs de validation Mongoose
+      Object.keys(error.errors).forEach(key => {
+        errors[key] = error.errors[key].message;
+      });
+      
+      return res.status(400).json({
+        message: "Certaines informations fournies ne sont pas valides",
+        errors
+      });
+    }
+    
+    // Erreur générique
+    res.status(500).json({
+      message: "Une erreur inattendue est survenue lors de la création de votre compte. Veuillez réessayer ultérieurement.",
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };
 
