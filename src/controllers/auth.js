@@ -14,47 +14,34 @@ const register = async (req, res) => {
     const { email, password, firstName, lastName } = req.body;
 
     // Validation des champs avant de vérifier la base de données
-    const errors = {};
-
-    // Validation de l'email
     if (!email) {
-      errors.email = "L'adresse email est requise";
-    } else if (!/^\S+@\S+\.\S+$/.test(email)) {
-      errors.email = "Veuillez entrer une adresse email valide";
+      return res.status(400).json({ message: "L'adresse email est requise" });
+    } 
+    
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+      return res.status(400).json({ message: "Veuillez entrer une adresse email valide" });
     }
 
-    // Validation du mot de passe
     if (!password) {
-      errors.password = "Le mot de passe est requis";
-    } else if (password.length < 8) {
-      errors.password = "Le mot de passe doit contenir au moins 8 caractères";
+      return res.status(400).json({ message: "Le mot de passe est requis" });
+    } 
+    
+    if (password.length < 8) {
+      return res.status(400).json({ message: "Le mot de passe doit contenir au moins 8 caractères" });
     }
 
-    // Validation du prénom
     if (!firstName || firstName.trim() === '') {
-      errors.firstName = "Le prénom est requis";
+      return res.status(400).json({ message: "Le prénom est requis" });
     }
 
-    // Validation du nom
     if (!lastName || lastName.trim() === '') {
-      errors.lastName = "Le nom est requis";
-    }
-
-    // Si des erreurs de validation sont détectées, renvoyer un message d'erreur détaillé
-    if (Object.keys(errors).length > 0) {
-      return res.status(400).json({
-        message: "Veuillez corriger les erreurs suivantes",
-        errors
-      });
+      return res.status(400).json({ message: "Le nom est requis" });
     }
 
     // Vérifier si l'utilisateur existe déjà
     const userExists = await User.findOne({ email });
     if (userExists) {
-      return res.status(400).json({
-        message: "Cette adresse email est déjà utilisée",
-        errors: { email: "Un compte existe déjà avec cette adresse email" }
-      });
+      return res.status(400).json({ message: "Cette adresse email est déjà utilisée" });
     }
 
     // Générer le token de vérification
@@ -143,33 +130,27 @@ const register = async (req, res) => {
       message: htmlMessage
     });
 
-    // Réponse appropriée
+    // Réponse appropriée avec juste le champ message
     res.status(201).json({
-      success: true,
       message: `Bienvenue ${firstName} ! Votre compte a été créé avec succès. Nous vous avons envoyé un email de vérification à l'adresse ${email}. Veuillez cliquer sur le lien dans cet email pour activer votre compte.`
     });
   } catch (error) {
     console.error('Erreur d\'enregistrement:', error);
     
-    // Gestion des erreurs spécifiques
+    // Gestion des erreurs spécifiques mais avec la structure de message d'origine
     if (error.name === 'ValidationError') {
-      const errors = {};
-      
-      // Formatage des erreurs de validation Mongoose
-      Object.keys(error.errors).forEach(key => {
-        errors[key] = error.errors[key].message;
-      });
+      // On prend juste la première erreur de validation pour rester cohérent avec la structure
+      const firstErrorKey = Object.keys(error.errors)[0];
+      const errorMessage = error.errors[firstErrorKey].message;
       
       return res.status(400).json({
-        message: "Certaines informations fournies ne sont pas valides",
-        errors
+        message: errorMessage
       });
     }
     
-    // Erreur générique
+    // Erreur générique avec structure d'origine
     res.status(500).json({
-      message: "Une erreur inattendue est survenue lors de la création de votre compte. Veuillez réessayer ultérieurement.",
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      message: "Une erreur inattendue est survenue lors de la création de votre compte. Veuillez réessayer ultérieurement."
     });
   }
 };
